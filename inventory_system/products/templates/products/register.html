@@ -1,0 +1,31 @@
+{% extends "products/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row">
+    <div class="col-11 col-md-4 mx-auto mt-5">
+
+        <h1>Sign Up</h1>
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit">Sign Up</button>
+        </form>  
+
+        <div class="pt-3">
+            <small class="text-muted">
+                Already have an account?
+                <a href="{% url 'user_login' %}" class="ml-2">Sign In</a>
+            </small>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}

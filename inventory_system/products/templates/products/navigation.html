@@ -1,0 +1,75 @@
+<nav class="navbar navbar-expand-lg bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url "home" %}">Inventory Manager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="#navbarNav"
+            aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link" href="#">{{ user.username }}</a>
+            </li>
+              <li class="nav.item">
+                <a class="nav-link" href="{% url "user_logout" %}">Sign out</a>
+            </li>
+            {% else %}
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user_login' %}">Sign In</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Sign Up</a>
+                    </li>
+
+                {% endif %}
+        </ul>
+    </div>
+
+        
+    </div> 
+
+</nav>
+
+<!-- <nav class="navbar navbar-expand-lg bg-light">
+    <div class="container-fluid">
+
+        <a class="navbar-brand" href="{% url 'home' %}">
+            Inventory Manager
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+
+                {% if user.is_authenticated %}
+
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'user_logout' %}">
+                            {% csrf_token %}
+                            <button class="btn btn-link nav-link">Logout</button>
+                        </form>
+                    </li>
+
+                {% else %}
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user_login' %}">Sign In</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Sign Up</a>
+                    </li>
+
+                {% endif %}
+
+            </ul>
+        </div>
+
+    </div>
+</nav> -->

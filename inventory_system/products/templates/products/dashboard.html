@@ -1,0 +1,71 @@
+{% extends "products/base.html" %}
+
+{% block content %}
+
+<div class="container mt-3">
+
+    <div class="d-flex justify-content-end mb-2">
+        <a href="{% url "add_item" %}" class="btn btn-primary btn-sm">+</a>
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table table-hover table-striped table-sm">
+
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>NAME</th>
+                    <th>QTY</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Created_at</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% if items|length == 0 %}
+                <tr>
+                    <td colspan="7" class="text-center">
+                        No items found
+                    </td>
+                </tr>
+                {% endif %}
+
+                {% for item in items %}
+                <td>
+<td class="text-nowrap">
+    <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-primary">Edit</a>
+    <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-danger">Delete</a>
+</td>
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>
+                     {{ item.quantity }}
+
+                    {% if item.quantity <= item.alert_quantity %}
+                    <span class="badge bg-danger">
+                    Low Stock
+                    </span>
+                    {% endif %}
+</td>
+                    <td>{{ item.category.name }}</td>
+                    <td>{{ item.price }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.created_at }}</td>
+                </tr>
+                
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock content %}
