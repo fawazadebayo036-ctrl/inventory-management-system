@@ -1,0 +1,149 @@
+{% extends "products/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h4>New Sale</h4>
+
+    <div class="row">
+
+        <!-- Product selector -->
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <label>Product</label>
+                    <select id="product-select" class="form-control mb-2">
+                        <option value="">-- Select Product --</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}"
+                                data-name="{{ product.name }}"
+                                data-price="{{ product.price }}"
+                                data-stock="{{ product.quantity }}">
+                            {{ product.name }} (Stock: {{ product.quantity }})
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Quantity</label>
+                    <input type="number" id="qty-input" class="form-control mb-2" min="1" value="1">
+
+                    <button onclick="addToCart()" class="btn btn-primary w-100">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Cart</h5>
+                    <table class="table table-sm" id="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-body"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"><strong>Total</strong></td>
+                                <td><strong id="cart-total">$0.00</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="cart" id="cart-data">
+
+                        <label>Payment Method</label>
+                        <select name="payment_method" class="form-control mb-3">
+                            <option value="cash">Cash</option>
+                            <option value="transfer">Transfer</option>
+                        </select>
+
+                        <button type="submit" onclick="submitCart()"
+                                class="btn btn-success w-100">
+                            Complete Sale
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">
+        Back to Dashboard
+    </a>
+</div>
+<script>
+    let cart = [];
+
+    function addToCart() {
+        const select = document.getElementById("product-select");
+        const qty = parseInt(document.getElementById("qty-input").value);
+        const option = select.options[select.selectedIndex];
+
+        if (!select.value) return alert("Select a product");
+        if (qty < 1) return alert("Quantity must be at least 1");
+        if (qty > parseInt(option.dataset.stock)) return alert("Not enough stock");
+
+        const existing = cart.find(i => i.id == select.value);
+        if (existing) {
+            existing.quantity += qty;
+        } else {
+            cart.push({
+                id: select.value,
+                name: option.dataset.name,
+                price: parseFloat(option.dataset.price),
+                quantity: qty
+            });
+        }
+
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(i => i.id != id);
+        renderCart();
+    }
+
+    function renderCart() {
+        const tbody = document.getElementById("cart-body");
+        tbody.innerHTML = "";
+        let total = 0;
+
+        cart.forEach(item => {
+            const subtotal = item.price * item.quantity;
+            total += subtotal;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td>$${subtotal.toFixed(2)}</td>
+                    <td>
+                        <button onclick="removeFromCart('${item.id}')"
+                                class="btn btn-sm btn-danger">x</button>
+                    </td>
+                </tr>`;
+        });
+
+        document.getElementById("cart-total").textContent = "$" + total.toFixed(2);
+    }
+
+    function submitCart() {
+        document.getElementById("cart-data").value = JSON.stringify(cart);
+    }
+</script>
+
+{% endblock %}

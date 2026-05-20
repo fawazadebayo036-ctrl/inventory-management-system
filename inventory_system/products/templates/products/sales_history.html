@@ -1,0 +1,100 @@
+{% extends "products/base.html" %} {% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Sales History</h4>
+    <a href="{% url 'sales_page' %}" class="btn btn-success btn-sm">
+      New Sale
+    </a>
+  </div>
+
+  <!-- Charts -->
+  <div class="row mb-4">
+    <div class="col-md-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="mb-3">Sales Per Day</h6>
+          <canvas id="salesChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="mb-3">Payment Method</h6>
+          <canvas id="paymentChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="table table-hover table-striped">
+      <thead class="table-light">
+        <tr>
+          <th>Sale #</th>
+          <th>Items</th>
+          <th>Payment</th>
+          <th>Total</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if sales|length == 0 %}
+        <tr>
+          <td colspan="5" class="text-center">No sales yet</td>
+        </tr>
+        {% endif %} {% for sale in sales %}
+        <tr>
+          <td>{{ sale.id }}</td>
+          <td>
+            {% for item in sale.saleitem_set.all %} {{ item.product.name }} x{{
+            item.quantity }}<br />
+            {% endfor %}
+          </td>
+          <td>{{ sale.get_payment_method_display }}</td>
+          <td>${{ sale.total }}</td>
+          <td>{{ sale.created_at|date:"M d, Y h:i A" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  new Chart(document.getElementById("salesChart"), {
+      type: "bar",
+      data: {
+          labels: {{ sale_labels|safe }},
+          datasets: [{
+              label: "Sales",
+              data: {{ sale_data|safe }},
+              backgroundColor: "rgba(25, 135, 84, 0.7)",
+              borderRadius: 4,
+          }]
+      },
+      options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+  });
+
+  new Chart(document.getElementById("paymentChart"), {
+      type: "pie",
+      data: {
+          labels: ["Cash", "Transfer"],
+          datasets: [{
+              data: [{{ cash_count }}, {{ transfer_count }}],
+              backgroundColor: ["#198754", "#0d6efd"],
+          }]
+      },
+      options: {
+          plugins: { legend: { position: "bottom" } }
+      }
+  });
+</script>
+
+{% endblock content %}
