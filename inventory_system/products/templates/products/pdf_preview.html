@@ -3,81 +3,151 @@
 {% block content %}
 <div class="container mt-4">
 
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4>Inventory Report Preview</h4>
+
         <div>
-            <a href="{% url 'inventory_pdf' %}" class="btn btn-danger btn-sm me-2" target="_blank">
+            <a href="{% url 'inventory_pdf' %}"
+               class="btn btn-danger btn-sm me-2"
+               target="_blank">
                 Download PDF
             </a>
-            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">
+
+            <a href="{% url 'dashboard' %}"
+               class="btn btn-secondary btn-sm">
                 Back to Dashboard
             </a>
         </div>
     </div>
 
-    <!-- Summary -->
+    <!-- Summary Cards -->
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center">
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 text-center h-100">
                 <div class="card-body">
                     <h5>Total Products</h5>
                     <h3>{{ total_products }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center">
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 text-center h-100">
                 <div class="card-body">
                     <h5>Low Stock Items</h5>
                     <h3 class="text-danger">{{ low_stock }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center">
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 text-center h-100">
                 <div class="card-body">
                     <h5>Inventory Value</h5>
                     <h3>${{ inventory_value|floatformat:2 }}</h3>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Generated info -->
-    <p class="text-muted">Generated: {{ now }} &nbsp;|&nbsp; User: {{ request.user.username }}</p>
+    <!-- Generated Info -->
+    <div class="mb-3">
+        <p class="text-muted mb-0">
+            Generated: {{ now }}
+            &nbsp; | &nbsp;
+            User: {{ request.user.username }}
+        </p>
+    </div>
 
-    <!-- Product table -->
-    <div class="table-responsive">
-        <table class="table table-hover table-striped table-sm">
-            <thead class="table-primary">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.category.name }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>${{ item.price }}</td>
-                    <td>
-                        {% if item.quantity <= item.alert_quantity %}
-                            <span class="badge bg-danger">Low Stock</span>
-                        {% else %}
-                            <span class="badge bg-success">OK</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Products Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped table-bordered table-sm align-middle">
+
+                    <thead class="table-primary text-center">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Alert Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for item in items %}
+                        <tr>
+
+                            <td class="text-center">
+                                {{ item.id }}
+                            </td>
+
+                            <td>
+                                {{ item.name }}
+                            </td>
+
+                            <!-- SAFE CATEGORY DISPLAY -->
+                            <td>
+                                {% if item.category %}
+                                    {{ item.category.name }}
+                                {% else %}
+                                    <span class="text-muted">
+                                        No Category
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                {{ item.quantity }}
+                            </td>
+
+                            <td class="text-end">
+                                ${{ item.price }}
+                            </td>
+
+                            <td class="text-center">
+                                {{ item.alert_quantity }}
+                            </td>
+
+                            <td class="text-center">
+
+                                {% if item.quantity <= item.alert_quantity %}
+                                    <span class="badge bg-danger">
+                                        Low Stock
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        OK
+                                    </span>
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No inventory items found.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
     </div>
 
 </div>

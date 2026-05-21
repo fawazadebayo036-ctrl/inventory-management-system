@@ -1,0 +1,49 @@
+{% extends "products/base.html" %}
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">AI Inventory Assistant</h4>
+    <a href="{% url 'clear_chat' %}" class="btn btn-sm btn-outline-danger">Clear Chat</a>
+  </div>
+
+  <!-- Chat window -->
+  <div id="chat-window" class="border rounded p-3 mb-3 bg-light"
+       style="height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+    {% for msg in history %}
+      {% if msg.role == "user" %}
+        <div class="d-flex justify-content-end">
+          <div class="bg-primary text-white rounded px-3 py-2" style="max-width: 75%;">
+            {{ msg.content }}
+          </div>
+        </div>
+      {% else %}
+        <div class="d-flex justify-content-start">
+          <div class="bg-white border rounded px-3 py-2" style="max-width: 75%; white-space: pre-wrap;">
+            {{ msg.content }}
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-muted text-center mt-auto mb-auto">
+        Ask me anything about your inventory, sales, or stock alerts.
+      </p>
+    {% endfor %}
+  </div>
+
+  <!-- Input form -->
+  <form method="POST">
+    {% csrf_token %}
+    <div class="input-group">
+      <input type="text" name="message" class="form-control"
+             placeholder="e.g. Which products are low on stock?" autofocus required>
+      <button class="btn btn-primary" type="submit">Send</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Auto-scroll to bottom
+  const chatWindow = document.getElementById("chat-window");
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+</script>
+{% endblock %}

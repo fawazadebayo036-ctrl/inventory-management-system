@@ -57,3 +57,14 @@ class SaleItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+
+
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [('user', 'User'), ('assistant', 'Assistant')]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.role} - {self.user.username}"

@@ -135,3 +135,11 @@ LOGIN_URL = "user_login"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+
+GEMINI_API_KEY = os.environ.get("AIzaSyBi0_Tjy3HatbbyCNkypuRla2JP3Murl00")

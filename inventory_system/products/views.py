@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView, CreateView, UpdateView, DeleteView 
-from .models import Product, SaleItem, Sale
+from .models import Product, SaleItem, Sale, ChatMessage
 from .forms import SignUpForm, ProductModelForm
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -18,6 +18,18 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from datetime import datetime, date, timedelta
 
+
+
+
+
+
+
+
+
+
+
+from django.views.decorators.http import require_POST
+from django.conf import settings
 
 # Home Page
 class HomePageView(TemplateView):
@@ -108,25 +120,6 @@ def dashboard(request):
             "search": search
         }
     )
-
-
-
-
-# Product List
-def product_list(request):
-
-    products = Product.objects.all()
-
-    return render(
-        request,
-        'products/product_list.html',
-        {'products': products}
-    )
-# class AddItemView(CreateView):
-#     model = Product
-#     fields = "__all__"
-#     template_name = "products/add_item.html"
-#     success_url = reverse_lazy("dashboard")
 
 
 class AddItemView(LoginRequiredMixin, CreateView):
@@ -286,7 +279,7 @@ def inventory_pdf(request):
         table_data.append([
             str(item.id),
             item.name,
-            item.category.name,
+            item.category.name if item.category else "Uncategorized",
             str(item.quantity),
             f"${item.price:,.2f}",
             status,
@@ -364,7 +357,7 @@ def dashboard(request):
     category_counts = {}
     for item in items:
         cat = item.category.name if item.category else "Uncategorized"
-    category_counts[cat] = category_counts.get(cat, 0) + 1
+        category_counts[cat] = category_counts.get(cat, 0) + 1
 
     category_labels = list(category_counts.keys())
     category_data = list(category_counts.values())
@@ -385,3 +378,98 @@ def dashboard(request):
             "expiring_soon": expiring_soon,
         }
     )
+@login_required(login_url="user_login")
+def chat_page(request):
+    history = ChatMessage.objects.filter(user=request.user).order_by("created_at")
+
+    if request.method == "POST":
+        user_message = request.POST.get("message", "").strip().lower()
+        if not user_message:
+            return redirect("chat_page")
+
+        ChatMessage.objects.create(user=request.user, role="user", content=request.POST.get("message", "").strip())
+
+        # fetch data
+        today = date.today()
+        week_ahead = today + timedelta(days=7)
+        items = Product.objects.filter(user=request.user)
+        sales = Sale.objects.filter(user=request.user)
+
+        # --- rule-based replies ---
+
+        if any(w in user_message for w in ["low stock", "low", "running out", "restock"]):
+            low = items.filter(quantity__lte=F("alert_quantity"))
+            if low.exists():
+                lines = "\n".join(f"• {p.name} — {p.quantity} left (alert: {p.alert_quantity})" for p in low)
+                reply = f"These products are low on stock:\n{lines}"
+            else:
+                reply = "All products are sufficiently stocked."
+
+        elif any(w in user_message for w in ["expir", "expire", "expiry"]):
+            expiring = items.filter(expiry_date__isnull=False, expiry_date__lte=week_ahead, expiry_date__gte=today)
+            if expiring.exists():
+                lines = "\n".join(f"• {p.name} — expires {p.expiry_date}" for p in expiring)
+                reply = f"Products expiring within 7 days:\n{lines}"
+            else:
+                reply = "No products are expiring within the next 7 days."
+
+        elif any(w in user_message for w in ["total product", "how many product", "number of product", "product count"]):
+            reply = f"You have {items.count()} products in your inventory."
+
+        elif any(w in user_message for w in ["inventory value", "worth", "total value", "value"]):
+            value = sum(p.quantity * p.price for p in items)
+            reply = f"Your total inventory value is ${value:,.2f}."
+
+        elif any(w in user_message for w in ["sale", "sales", "revenue", "sold"]):
+            total_sales = sales.count()
+            cash = sales.filter(payment_method="cash").count()
+            transfer = sales.filter(payment_method="transfer").count()
+            today_sales = sales.filter(created_at__date=today).count()
+            reply = (
+                f"Sales summary:\n"
+                f"• Total sales: {total_sales}\n"
+                f"• Today: {today_sales}\n"
+                f"• Cash: {cash}\n"
+                f"• Transfer: {transfer}"
+            )
+
+        elif any(w in user_message for w in ["most stock", "highest stock", "most quantity"]):
+            top = items.order_by("-quantity").first()
+            reply = f"'{top.name}' has the most stock with {top.quantity} units." if top else "No products found."
+
+        elif any(w in user_message for w in ["least stock", "lowest stock", "least quantity"]):
+            bottom = items.order_by("quantity").first()
+            reply = f"'{bottom.name}' has the least stock with {bottom.quantity} units." if bottom else "No products found."
+
+        elif any(w in user_message for w in ["category", "categories"]):
+            from collections import Counter
+            cats = Counter(p.category.name if p.category else "Uncategorized" for p in items)
+            lines = "\n".join(f"• {cat}: {count} product(s)" for cat, count in cats.items())
+            reply = f"Products by category:\n{lines}" if lines else "No categories found."
+
+        elif any(w in user_message for w in ["hello", "hi", "hey"]):
+            reply = f"Hello! Ask me about your inventory, stock levels, sales, or expiry dates."
+
+        elif any(w in user_message for w in ["help", "what can you do", "what do you know"]):
+            reply = (
+                "I can answer questions like:\n"
+                "• Which products are low on stock?\n"
+                "• What is my inventory value?\n"
+                "• Any products expiring soon?\n"
+                "• How many sales today?\n"
+                "• Which product has the most/least stock?\n"
+                "• Show products by category"
+            )
+
+        else:
+            reply = "I didn't understand that. Type 'help' to see what I can answer."
+
+        ChatMessage.objects.create(user=request.user, role="assistant", content=reply)
+        return redirect("chat_page")
+
+    return render(request, "products/chat_page.html", {"history": history})
+
+@login_required(login_url="user_login")
+def clear_chat(request):
+    ChatMessage.objects.filter(user=request.user).delete()
+    return redirect("chat_page")

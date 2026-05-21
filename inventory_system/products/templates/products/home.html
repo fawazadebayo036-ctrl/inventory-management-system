@@ -1,14 +1,20 @@
 {% extends "products/base.html" %}
-
 {% block content %}
-<div>
-    <div class="col-sm-11 col-md-4 mx-auto mx-5">
-        <h1 class="fw-light">Track and Manage Your Inventory</h1>
-        <p class="fw-light">Keep track of your inventory and recieve alert for low inventory</p>
-        <div>
-            <a href="{% url "dashboard" %}" class="btn btn-primary">Get Started Now</a>
-        </div>
+
+<div style="min-height:80vh; display:flex; align-items:center; justify-content:center;">
+  <div style="text-align:center; max-width:480px;">
+    <div style="font-family:'DM Mono',monospace; font-size:12px; color:var(--accent); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:20px;">Inventory Management</div>
+    <h1 style="font-size:42px; font-weight:600; line-height:1.15; margin-bottom:16px; color:var(--text);">
+      Track every product,<br>never miss a restock.
+    </h1>
+    <p style="color:var(--muted); font-size:15px; line-height:1.7; margin-bottom:32px;">
+      Real-time stock tracking, low stock alerts, sales history, and an AI assistant — all in one place.
+    </p>
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <a href="{% url 'register' %}" class="btn-accent" style="padding:12px 28px; font-size:14px; border-radius:10px; text-decoration:none;">Get Started</a>
+      <a href="{% url 'user_login' %}" class="btn-outline" style="padding:12px 28px; font-size:14px; border-radius:10px;">Sign In</a>
     </div>
+  </div>
 </div>
 
 {% endblock content %}

@@ -1,164 +1,97 @@
 {% extends "products/base.html" %}
 {% load static %}
-
 {% block content %}
 
-<div class="row mb-4">
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+  <div>
+    <h1 class="page-title">Inventory</h1>
+    <p class="page-sub">{{ request.user.username }} · {{ total_products }} products</p>
+  </div>
+  <a href="{% url 'add_item' %}" class="btn-accent">+ Add Product</a>
+</div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5>Total Products</h5>
-                <h3>{{ total_products }}</h3>
-            </div>
-        </div>
-    </div>
+<!-- Stats -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-label">Total Products</div>
+    <div class="stat-value accent">{{ total_products }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Low Stock</div>
+    <div class="stat-value {% if low_stock > 0 %}danger{% endif %}">{{ low_stock }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Inventory Value</div>
+    <div class="stat-value">${{ inventory_value|floatformat:2 }}</div>
+  </div>
+</div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5>Low Stock Items</h5>
-                <h3 class="text-danger">
-                    {{ low_stock }}
-                </h3>
-            </div>
-        </div>
-    </div>
-<a href="{% url 'inventory_pdf_preview' %}" class="btn btn-danger btn-sm me-2" target="_blank">
-    Download PDF
-</a>
-
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5>Inventory Value</h5>
-                <h3>${{ inventory_value }}</h3>
-            </div>
-        </div>
-    </div>
-
-</div>{% if expiring_soon %}
-<div class="alert alert-warning mt-3">
-    <strong>⚠ Expiring Soon (within 7 days):</strong>
-    <ul class="mb-0 mt-1">
-        {% for item in expiring_soon %}
-        <li>{{ item.name }} — expires {{ item.expiry_date }}</li>
-        {% endfor %}
-    </ul>
+{% if expiring_soon %}
+<div class="alert-warn mb-4">
+  <strong>⚠ Expiring within 7 days:</strong>
+  {% for item in expiring_soon %} {{ item.name }} ({{ item.expiry_date }}){% if not forloop.last %},{% endif %}{% endfor %}
 </div>
 {% endif %}
-<!-- thead -->
-<th>Expiry</th>
 
-<!-- tbody -->
-<td>
-    {% if item.expiry_date %}
-        {{ item.expiry_date }}
-    {% else %}
-        <span class="text-muted">—</span>
-    {% endif %}
-</td>
-<form method="GET" class="mb-3">
-
-    <input type="text"
-           name="search"
-           class="form-control"
-           placeholder="Search products...">
-
-</form>
-<div class="container mt-3">
-
-<div class="d-flex justify-content-end mb-2">
-    {% if request.user.is_superuser %}
-    <a href="/admin/" class="btn btn-dark btn-sm me-2">Admin Panel</a>
-    {% endif %}
-    <a href="{% url "add_item" %}" class="btn btn-primary btn-sm">+</a>
-    <a href="{% url 'sales_page' %}" class="btn btn-success btn-sm me-2">New Sale</a>
+<!-- Search + Actions -->
+<div style="display:flex; gap:12px; margin-bottom:20px; align-items:center;">
+  <form method="GET" style="flex:1;">
+    <input type="text" name="search" class="search-input" placeholder="Search products..." value="{{ search|default:'' }}">
+  </form>
+  <a href="{% url 'sales_page' %}" class="btn-outline">New Sale</a>
 </div>
 
-    <div class="table-responsive">
-
-        <table class="table table-hover table-striped table-sm">
-
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                     <th>Image</th>
-                    <th>NAME</th>
-                    <th>QTY</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Description</th>
-                    <th>Created_at</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% if items|length == 0 %}
-                <tr>
-                    <td colspan="9" class="text-center">
-                        No items found
-                    </td>
-                </tr>
-                {% endif %}
-
-
-{% for item in items %}
-<tr>
-
-    <td>{{ item.id }}</td>
-     <td>
-        {% if item.image %}
-        <img src="{{ item.image.url }}" alt="{{ item.name }}"
-            style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-        {% else %}
-        <img src="{% static 'images/no-image.png' %}" alt="No Image"
-        style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-        {% endif %}
-    </td>
-
-    <td>{{ item.name }}</td>
-
-    <td>
-        {{ item.quantity }}
-
-        {% if item.quantity <= item.alert_quantity %}
-        <span class="badge bg-danger">
-            Low Stock
-        </span>
-        {% endif %}
-    </td>
-
-    <td>{{ item.category.name }}</td>
-
-    <td>${{ item.price }}</td>
-
-    <td>{{ item.description }}</td>
-
-    <td>{{ item.created_at }}</td>
-
-    <td class="text-nowrap">
-        <a href="{% url 'edit_item' item.id %}"
-           class="btn btn-sm btn-primary">
-           Edit
-        </a>
-
-        <a href="{% url 'delete_item' item.id %}"
-           class="btn btn-sm btn-danger">
-           Delete
-        </a>
-    </td>
-
-</tr>
-{% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
+<!-- Table -->
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Qty</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Expiry</th>
+        <th style="text-align:right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if items|length == 0 %}
+      <tr><td colspan="8" style="text-align:center; color:var(--muted); padding:40px;">No products found</td></tr>
+      {% endif %}
+      {% for item in items %}
+      <tr>
+        <td style="color:var(--muted); font-family:'DM Mono',monospace; font-size:12px;">#{{ item.id }}</td>
+        <td>
+          {% if item.image %}
+          <img src="{{ item.image.url }}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+          {% else %}
+          <div style="width:36px;height:36px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;">
+            <svg width="16" height="16" fill="none" stroke="var(--muted)" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M3 15l5-5 4 4 3-3 6 6"/></svg>
+          </div>
+          {% endif %}
+        </td>
+        <td style="font-weight:500;">{{ item.name }}</td>
+        <td>
+          {{ item.quantity }}
+          {% if item.quantity <= item.alert_quantity %}
+          <span class="badge-low">LOW</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted);">{{ item.category.name }}</td>
+        <td style="font-family:'DM Mono',monospace; font-size:13px;">${{ item.price }}</td>
+        <td style="color:var(--muted); font-size:12.5px;">
+          {% if item.expiry_date %}{{ item.expiry_date }}{% else %}—{% endif %}
+        </td>
+        <td style="text-align:right;">
+          <a href="{% url 'edit_item' item.id %}" class="btn-outline" style="padding:5px 12px; font-size:12px;">Edit</a>
+          <a href="{% url 'delete_item' item.id %}" class="btn-danger-outline" style="padding:5px 12px; font-size:12px; margin-left:6px;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 {% endblock content %}
